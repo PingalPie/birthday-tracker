@@ -1,39 +1,35 @@
 import time
 import subprocess
 import sys
-import argparse
+import typer
 import os
 
-class birthday():
-    def __init__(self):
-        super().__init__()
-        self.usr_home_dir=os.environ.get('HOME')
-        self.dir_path=f"{self.usr_home_dir}/.config/bday-tracker"
-        self.conf_path=f"{self.usr_home_dir}/.config/bday-tracker/bday-list"
-        self.parser = argparse.ArgumentParser(description='Reminder for whose birthday it is')
+cmd = typer.Typer()
 
-    def bdayListAppend(self): #, name, surname, date, month, year_born):
-        self.parser.add_argument("name", nargs=1, metavar='<name-of-birthday-person>', type=str, help='name of the person whose birthday it is')
-        self.parser.add_argument("surname", nargs=1, metavar='<surname-of-birthday-person>', type=str, help='surname of the person whose birthday it is')
-        self.parser.add_argument("date", nargs=1, metavar='<date-of-birthday>', type=int, help='date of birthday')
-        self.parser.add_argument("month", nargs=1, metavar='<month-of-birthday>', type=int, help='month of birthday')
-        self.parser.add_argument("year_born", nargs=1, metavar='<year-of-birthday>', type=int, help='year of birthday')
-        self.args = self.parser.parse_args()
-        print(self.args)
-        if not os.path.exists(self.dir_path):
-            os.mkdir(self.dir_path)
-            with open(self.conf_path, "w") as f:
-                f.close()
+usr_home_dir=os.environ.get('HOME')
+dir_path=f'{usr_home_dir}/.config/bday-tracker'
+bday_list_path=f'{dir_path}/bday-list'
 
-        if not os.path.exists(self.conf_path):
-            open(self.conf_path, 'w').close()
+@cmd.command()
+def bdayListAppend(name: str, surname: str, date: int, month: int, year_born: int):
+    global dir_path
+    global bday_list_path
+    if not os.path.exists(dir_path):
+        os.mkdir(dir_path)
+        with open(bday_list_path, 'w') as f:
+            f.close()
 
-        with open(self.conf_path, 'a') as f:
-            f.write(f"{self.args.date[0]}-{self.args.month[0]} {self.args.name[0]} {self.args.surname[0]}--{self.args.year_born[0]}\n")
+    if not os.path.exists(bday_list_path):
+        open(bday_list_path, 'w').close()
 
+    with open(bday_list_path, 'a') as f:
+        f.write(f'{date}-{month} {name} {surname}--{year_born}\n')
 
-    def CheckIsTodayBday(self):
-        with open(self.conf_path) as f:
+@cmd.command()
+def CheckIsTodayBday():
+    global bday_list_path
+    if not os.exists(bday_list_path):
+        with open(bday_list_path) as f:
             today = time.strftime('%d-%m')
             flag = 0
             for line in f:
@@ -41,14 +37,10 @@ class birthday():
                 if today in line[0]:
                     flag = 1
                     surname = line[2].split('--')[0]
-                    # line[1] is name line[2] is surname line[3] is year_born
-                    subprocess.call(f'notify-send "Birthdays Today: {line[1]} {surname} "', shell=True)
-
+                    # line[0] is date-month line[1] is name line[2] surname--year_born
+                    subprocess.call('notify-send "Birthdays Today: {line[1]} {surname}"', shell=True)
             if flag == 0:
                 subprocess.call('notify-send "No Birthdays today"', shell=True)
 
-
-if __name__ == '__main__':
-    start = birthday()
-    # start.bdayListAppend()
-    start.CheckIsTodayBday()
+if __name__=='__main__':
+    cmd()
