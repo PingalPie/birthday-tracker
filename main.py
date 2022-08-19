@@ -28,7 +28,9 @@ def bdayListAppend(name: str, surname: str, date: int, month: int, year_born: in
 @cmd.command()
 def CheckIsTodayBday():
     global bday_list_path
-    if not os.exists(bday_list_path):
+    if not os.path.exists(bday_list_path):
+        sys.exit()
+    else:
         with open(bday_list_path) as f:
             today = time.strftime('%d-%m')
             flag = 0
